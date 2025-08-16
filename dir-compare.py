@@ -1,4 +1,7 @@
 import os
+
+#TODO: A lot of refactoring can be done here. Rework if tool will be extended.
+# Really simple for the time being.
 print("Hey, starting the comparison of two directories")
 
 def compare_directories(dir1, dir2):
