@@ -1,5 +1,5 @@
 from os import listdir, sys
-from os.path import isfile, isdir, join
+from os.path import isfile, isdir, join, getsize
 from typing import Callable
 
 # TODO: This can be done with arrays for entries1/entries2, thus allowing for
@@ -23,54 +23,51 @@ def compare_directories(dir1: str, dir2:str):
     """
 
     # Get the list of entries in each dir:
-    entries1 = set(listdir(dir1))
-    entries2 = set(listdir(dir2))
+    entries = ((dir1, set(listdir(dir1))), (dir2, set(listdir(dir2))))
 
     # Get files/directories only in each dir:
-    files1 = isolate_by_type(entries1, lambda e: isfile(join(dir1, e)))
-    files2 = isolate_by_type(entries2, lambda e: isfile(join(dir2, e)))
+    files = ()
+    for entry in entries:
+        files += (isolate_by_type(entry[1], lambda e: isfile(join(entry[0], e))), )
 
-    subdirs1 = isolate_by_type(entries1, lambda e: isdir(join(dir1, e)))
-    subdirs2 = isolate_by_type(entries2, lambda e: isdir(join(dir2, e)))
+    subdirs = ()
+    for entry in entries:
+        subdirs += (isolate_by_type(entry[1], lambda e: isdir(join(entry[0], e))), )
 
     # Find common files:
-    common_files = files1.intersection(files2)
+    common_files = files[0].intersection(files[1])
     # Remove common files from both sets:
-    distinct_files1 = files1 - common_files
-    distinct_files2 = files2 - common_files
+    distinct_files = ()
+    for file_set in files:
+        distinct_files += (file_set - common_files, )
 
-    common_dirs = subdirs1.intersection(subdirs2)
-    distinct_subdirs1 = subdirs1 - common_dirs
-    distinct_subdirs2 = subdirs2 - common_dirs
+    common_dirs = subdirs[0].intersection(subdirs[1])
+    distinct_subdirs = ()
+    for sub_dir_set in subdirs:
+        distinct_subdirs += (sub_dir_set - common_dirs, )
 
-    if (distinct_files1):
-        for file in distinct_files1:
-            print(f"File '{join(dir1, file)}' is only in {dir1}")
-    if (distinct_files2):
-        for file in distinct_files2:
-            print(f"File '{join(dir2, file)}' is only in {dir2}")
+    for distinct_file_set in distinct_files:
+      if (distinct_file_set):
+          for file in distinct_file_set:
+              print(f"File '{join(dir1, file)}' is only in {dir1}")
 
     # Compare common files by size:
     for file in common_files:
-        fullFile1 = join(dir1, file)
-        fullFile2 = join(dir2, file)
-        size1 = os.path.getsize(fullFile1)
-        size2 = os.path.getsize(fullFile2)
+        full_files = (join(dir1, file), join(dir2, file))
+        size = (getsize(fullFile1), getsize(fullFile2))
 
-        if size1 != size2:
+        if size[0] != size[1]:
             print(f"File '{fullFile1}' diffeers in size ({size1}) from '{fullFile2}' ({size2})")
 
-    if (distinct_subdirs1):
-        for dir in distinct_subdirs1:
-            print(f"Directory '{join(dir1, dir)}' is only in {dir1}")
-    if (distinct_subdirs2):
-        for dir in distinct_subdirs2:
-            print(f"Directory '{join(dir2, dir)}' is only in {dir2}")
+    for distinct_subdir_set in distinct_subdirs:
+      if (distinct_subdir_set):
+          for dir in distinct_subdir_set:
+              print(f"Directory '{join(dir1, dir)}' is only in {dir1}")
+
     # Compare common directories:
     for dir in common_dirs:
-        fullDir1 = join(dir1, dir)
-        fullDir2 = join(dir2, dir)
-        compare_directories(fullDir1, fullDir2)
+        full_dirs = (join(dir1, dir), join(dir2, dir))
+        compare_directories(full_dirs[0], full_dirs[1])
 
 # Check the arguments:
 
