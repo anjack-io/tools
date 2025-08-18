@@ -1,6 +1,7 @@
 from os import listdir, sys
-from os.path import isfile, isdir, join, getsize
+from os.path import isfile, isdir, join, getsize, getmtime
 from typing import Callable
+from argparse import ArgumentParser
 
 # TODO: This can be done with arrays for entries1/entries2, thus allowing for
 #   more complex comparisons of N arguments. Of course, the logic will become
@@ -12,12 +13,32 @@ from typing import Callable
 #   be hard for humans.
 print("Starting the comparison of two directories")
 
+def compare_files(files: (str, str), criteria: str) -> (bool, str):
+    """
+    Compares two files by specified criteria. It is assumed that the
+    files already match by name
+    """
+
+    #Size:
+    if ('s' in criteria):
+        sizes = (getsize(files[0]), getsize(files[1]))
+
+        if sizes[0] != sizes[1]:
+            return (False, "Size")
+
+    if ('m' in criteria):
+        modified_times = (getmtime(files[0]), getmtime(files[1]))
+        if modified_times[0] != modified_times[1]:
+            return (False, "Modified Time")
+
+    return (True, "")
+
 def isolate_by_type(entries: list[str], isolator: Callable[[str], list[str]]):
     isolated_entries = {e for e in entries if isolator(e)}
 
     return isolated_entries
 
-def compare_directories(dir1: str, dir2:str):
+def compare_directories(dir1: str, dir2: str, criteria: str, show_equals=False) -> (bool, str):
     """
     Compare two directories and print the differences.
     """
@@ -54,10 +75,13 @@ def compare_directories(dir1: str, dir2:str):
     # Compare common files by size:
     for file in common_files:
         full_files = (join(dir1, file), join(dir2, file))
-        size = (getsize(fullFile1), getsize(fullFile2))
+        res = compare_files(full_files, criteria)
 
-        if size[0] != size[1]:
-            print(f"File '{fullFile1}' diffeers in size ({size1}) from '{fullFile2}' ({size2})")
+        if (not res[0]):
+            print(f"Files {full_files[0]} and {full_files[1]} differ by {res[1]}")
+        else:
+            if show_equals:
+                print(f"Files {full_files[0]} and {full_files[1]} are equal")
 
     for distinct_subdir_set in distinct_subdirs:
       if (distinct_subdir_set):
@@ -67,24 +91,30 @@ def compare_directories(dir1: str, dir2:str):
     # Compare common directories:
     for dir in common_dirs:
         full_dirs = (join(dir1, dir), join(dir2, dir))
-        compare_directories(full_dirs[0], full_dirs[1])
+        compare_directories(full_dirs[0], full_dirs[1], criteria, show_equals)
 
 # Check the arguments:
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python dir-comparey.py <dir1> <dir2>")
+
+    arg_parser = ArgumentParser(
+                        prog='dir-compare',
+                        description='Compares two directories in depth by specified file attributes',
+                        epilog='')
+
+    arg_parser.add_argument('-s', '--source')
+    arg_parser.add_argument('-t', '--target')
+    arg_parser.add_argument('-e', '--show_equals', type = str)
+    arg_parser.add_argument('-c', '--criteria', help = "Specifies the criteria to check upon: empty - filename only, s: size, m: modified time, can be combined, e.g. sm - both")
+    args = arg_parser.parse_args()
+
+    if not isdir(args.source):
+        print(f"Error: {args.source} is not a valid directory.")
         exit(1)
 
-    dir1 = sys.argv[1]
-    dir2 = sys.argv[2]
-
-    if not isdir(dir1):
-        print(f"Error: {dir1} is not a valid directory.")
+    if not isdir(args.target):
+        print(f"Error: {args.target} is not a valid directory.")
         exit(1)
 
-    if not isdir(dir2):
-        print(f"Error: {dir2} is not a valid directory.")
-        exit(1)
+    compare_directories(args.source, args.target, args.criteria, args.show_equals.lower() == "true")
 
-    compare_directories(dir1, dir2)
