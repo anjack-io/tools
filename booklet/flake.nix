@@ -12,11 +12,15 @@
         pkgs = import nixpkgs {
           inherit system;
         };
+        tex = pkgs.texlive.combine {
+          inherit (pkgs.texlive) scheme-basic pdfjam pdfpages;
+        };
       in {
         devShells.default = pkgs.mkShell {
-          packages = with pkgs; [
-            texliveFull
-            psutils
+          packages = [
+            tex
+            pkgs.qpdf
+            pkgs.poppler_utils
           ];
         };
       });
