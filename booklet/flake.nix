@@ -13,7 +13,7 @@
           inherit system;
         };
         tex = pkgs.texlive.combine {
-          inherit (pkgs.texlive) scheme-basic pdfjam pdfpages;
+          inherit (pkgs.texlive) scheme-small pdfjam;
         };
       in {
         devShells.default = pkgs.mkShell {
