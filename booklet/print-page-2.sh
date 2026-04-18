@@ -5,4 +5,4 @@ read
 
 . printer-name.sh
 
-lp -d ${PRINTER_NAME} -o page-set=even -o outputorder=reverse chl-booklet.pdf
+lp -d ${PRINTER_NAME} -P 2 chl-booklet.pdf

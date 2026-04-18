@@ -2,4 +2,4 @@
 
 . printer-name.sh
 
-lp -d ${PRINTER_NAME} -o page-set=odd chl-booklet.pdf
+lp -d ${PRINTER_NAME} -P 1 chl-booklet.pdf
