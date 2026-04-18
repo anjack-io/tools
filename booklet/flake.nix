@@ -1,21 +1,23 @@
 {
-  description = "PDF booklet shell";
+  description = "PDF booklet tools";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs }:
-    let
-      system = builtins.currentSystem;
-      pkgs = import nixpkgs { inherit system; };
-    in {
-      devShells.${system}.default = pkgs.mkShell {
-        packages = with pkgs; [
-          texlivePackages.pdfjam
-          texlivePackages.pdfbook2
-          psutils
-        ];
-      };
-    };
+  outputs = { self, nixpkgs, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+        };
+      in {
+        devShells.default = pkgs.mkShell {
+          packages = with pkgs; [
+            texliveFull
+            psutils
+          ];
+        };
+      });
 }
